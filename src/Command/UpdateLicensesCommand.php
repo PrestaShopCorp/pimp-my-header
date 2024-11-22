@@ -370,6 +370,7 @@ class UpdateLicensesCommand extends Command
                 }
 
                 $this->reportOperationResult($newContent, $file->getContents(), $file->getFilename());
+
                 return;
             }
         }
