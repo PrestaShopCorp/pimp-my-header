@@ -296,7 +296,7 @@ class UpdateLicensesCommand extends Command
         $output->writeln('');
     }
 
-    private function addLicenseToFile(SplFileInfo $file, string $startDelimiter = '\/', string $endDelimiter = '\/'): void
+    private function addLicenseToFile(SplFileInfo $file, string $startDelimiter = '\/', string $endDelimiter = '\/', string $startReplacer = null, string $endReplacer = null, ?string $commentDelimiter = null): void
     {
         $content = $file->getContents();
         $oldContent = $content;
@@ -305,10 +305,15 @@ class UpdateLicensesCommand extends Command
         $matches = [];
         $text = $this->text;
         if ($startDelimiter != '\/') {
-            $text = $startDelimiter . ltrim($text, '/');
+            $startReplacer = $startReplacer ?: $startDelimiter;
+            $text = $startReplacer . ltrim($text, '/**');
         }
         if ($endDelimiter != '\/') {
-            $text = rtrim($text, '/') . $endDelimiter;
+            $endReplacer = $endReplacer ?: $endDelimiter;
+            $text = rtrim($text, '*/') . $endReplacer;
+        }
+        if (!empty($commentDelimiter)) {
+            $text = preg_replace('% \*%', ' ' . $commentDelimiter, $text);
         }
 
         // Try to find an existing license
@@ -391,13 +396,13 @@ class UpdateLicensesCommand extends Command
 
     private function addLicenseToSmartyTemplate(SplFileInfo $file): void
     {
-        $this->addLicenseToFile($file, '{', '}');
+        $this->addLicenseToFile($file, '{', '}', '{**', '*}');
     }
 
     private function addLicenseToTwigTemplate(SplFileInfo $file): void
     {
         if (strrpos($file->getRelativePathName(), 'html.twig') !== false) {
-            $this->addLicenseToFile($file, '{#', '#}');
+            $this->addLicenseToFile($file, '{#', '#}', '{##', null, '#');
         }
     }
 
